@@ -1,0 +1,7 @@
+# Recommended environment: Python 3.10+
+# Pin these after validating the exact laboratory environment.
+pyvisa>=1.16,<1.17
+pyvisa-py>=0.8,<0.9
+numpy>=1.26
+pandas>=2.0
+matplotlib>=3.8
