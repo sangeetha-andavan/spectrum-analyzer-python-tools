@@ -2,9 +2,9 @@
 
 Python tools for controlling a spectrum analyzer, acquiring RF spectra, saving measurements, and performing repeatable post-processing.
 
-This repository is intentionally written as a general RF instrumentation project. It does not depend on one particular test article or experiment.
+This is a general RF instrumentation project. It is not tied to one particular test article or experiment.
 
-## Measurement workflow
+## 1. Measurement workflow
 
 ```text
 PC
@@ -20,66 +20,74 @@ Antenna / RF source / test setup
 Python → PyVISA → SCPI → Spectrum Analyzer → Trace → CSV → Analysis → Plots
 ```
 
-## What this project demonstrates
+The workflow is:
 
-The repository covers the complete measurement chain:
+1. Connect the PC to the spectrum analyzer.
+2. Verify network/VISA communication.
+3. Configure the frequency range and analyzer settings.
+4. Start and complete the sweep.
+5. Read the trace into Python.
+6. Save the measurement as CSV.
+7. Analyse the saved data and generate plots.
 
-1. Connect a PC to a spectrum analyzer through Ethernet/VISA.
-2. Identify the instrument using `*IDN?`.
-3. Configure frequency span, RBW, VBW, detector, sweep and averaging.
-4. Trigger and acquire a spectrum trace.
-5. Transfer frequency/power data to Python.
-6. Save the acquired trace as CSV.
-7. Analyse and plot the saved data without reconnecting to the instrument.
+## 2. Physical connection and IP configuration
 
-## Physical connection
+For Ethernet control, connect the PC and spectrum analyzer directly with Ethernet or connect both to the same laboratory LAN.
 
-For Ethernet control, connect the spectrum analyzer and PC either directly with an Ethernet cable or through the same laboratory LAN.
-
-The analyzer must have a reachable IPv4 address. The PC and analyzer should normally be on compatible IP subnets.
+The analyzer needs a reachable IPv4 address. The PC and analyzer should normally be on compatible subnets.
 
 Example only:
 
 ```text
-PC Ethernet:       192.168.1.10
-Spectrum analyzer: 192.168.1.20
-Subnet mask:       255.255.255.0
+PC                 192.168.1.10
+Spectrum analyzer  192.168.1.20
+Subnet mask        255.255.255.0
 ```
 
-Replace these example values with the network settings used in your laboratory.
+Do not copy these example values into a real setup. Replace them with the values used by your laboratory network.
 
-Check connectivity first:
+First test the connection from the PC:
 
 ```bash
 ping <ANALYZER_IP>
 ```
 
-A common VISA TCP/IP instrument resource is:
+A common VISA TCP/IP resource is:
 
 ```text
 TCPIP0::<ANALYZER_IP>::INSTR
 ```
 
-The exact resource format depends on the analyzer and VISA interface.
+The exact VISA resource depends on the analyzer and the supported interface.
 
-## Python environment
+## 3. Python environment and packages
 
 Recommended baseline: **Python 3.10 or newer**.
 
-Create an isolated environment:
+Create a virtual environment:
 
 ```bash
 python -m venv .venv
 ```
 
-Activate it and install the dependencies:
+Activate it:
+
+```bash
+# Windows
+.venv\Scripts\activate
+
+# Linux / macOS
+source .venv/bin/activate
+```
+
+Install the packages:
 
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Record the exact environment used for a measurement with:
+Check the installed environment:
 
 ```bash
 python --version
@@ -90,106 +98,145 @@ pip show pandas
 pip show matplotlib
 ```
 
-## Main packages
+### Packages used
 
-**PyVISA** provides the Python interface to VISA instruments and handles resource sessions, queries, writes, and data transfer.
+**PyVISA** — Python interface for VISA instrument communication.
 
-**PyVISA-py** is a pure-Python VISA backend. The acquisition code selects it with:
+**PyVISA-py** — pure-Python VISA backend selected in the acquisition script with:
 
 ```python
 rm = pyvisa.ResourceManager("@py")
 ```
 
-**NumPy** is used for numerical operations on frequency and power arrays.
+**NumPy** — numerical operations on frequency and power arrays.
 
-**Pandas** is used for CSV-based analysis.
+**Pandas** — CSV loading and tabular analysis.
 
-**Matplotlib** is used to generate spectrum and comparison plots.
+**Matplotlib** — spectrum and comparison plots.
 
-For reproducible laboratory work, pin the exact package versions that have been validated on the measurement PC.
+For reproducible measurements, record and pin the package versions that were actually validated on the measurement PC.
 
-## Why analyzer parameters matter
+## 4. Why analyzer parameters matter
 
 ### Start and stop frequency
 
-These define the measured frequency region. A wider span gives broader coverage, while a smaller span can make a particular spectral region easier to inspect.
+These define the frequency region being measured.
+
+A wider span gives broader coverage. A narrower span can make a selected spectral region easier to inspect.
 
 ### RBW — Resolution Bandwidth
 
 RBW is the analyzer's frequency resolution. It is especially important when the signals of interest are narrowband.
 
-A smaller RBW allows finer frequency discrimination and generally includes less noise power within each resolution bandwidth. The trade-off is a longer sweep time.
+A smaller RBW gives finer frequency discrimination and normally includes less noise power in each resolution bandwidth, but the analyzer generally needs more time to sweep the same span.
 
-A larger RBW allows faster measurements, but nearby or narrow spectral features can become less distinguishable and the noise power measured within each resolution bandwidth increases.
+A larger RBW allows a faster sweep, but narrow or closely spaced spectral components become less distinguishable and more noise power is included within each resolution bandwidth.
 
 ### VBW — Video Bandwidth
 
-VBW applies additional filtering to the detected trace. A smaller VBW can smooth rapid fluctuations, but may increase measurement time.
+VBW applies additional filtering to the detected trace. A smaller VBW can smooth short-term fluctuations, but may increase measurement time.
 
 ### Sweep time
 
-Sweep time is the time required to scan the selected frequency span. Settings such as RBW and VBW can strongly affect it.
+Sweep time is the time used to scan the selected frequency span. RBW and VBW are among the settings that can affect it.
 
 ### Number of averages
 
-Averaging repeated sweeps reduces random fluctuations and produces a more stable estimate of the spectrum.
+Averaging repeated sweeps reduces random fluctuations and gives a more stable estimate of the spectrum.
 
-## RBW in practice: why signal visibility changes
+## 5. RBW in practice: signal visibility
 
-The following two measurements used the same physical setup, center frequency, and span. Only the RBW/VBW settings were changed.
+The following two measurements used the same physical setup, center frequency, and span. The RBW and VBW were changed together.
 
 ### Measured settings
 
-| Parameter | RBW = 100 kHz | RBW = 3 MHz |
+| Parameter | 100 kHz RBW | 3 MHz RBW |
 |---|---:|---:|
-| Resolution bandwidth | 100 kHz | 3 MHz |
-| Video bandwidth | 100 kHz | 3 MHz |
+| RBW | 100 kHz | 3 MHz |
+| VBW | 100 kHz | 3 MHz |
 | Center frequency | 1.5 GHz | 1.5 GHz |
 | Span | 2 GHz | 2 GHz |
 | Sweep time | 3.874 s | 90.56 ms |
 
-### What changes visually?
+### 100 kHz RBW
 
-With **100 kHz RBW**, the narrow H1 and RF-source features are much easier to distinguish from the surrounding noise.
+With 100 kHz RBW, the narrow H1 and RF-source features are clearly visible above the surrounding noise.
 
-With **3 MHz RBW**, the same features become much less distinct and can approach the noise background.
+![Spectrum with 100 kHz RBW](images/rbw_100khz.jpg)
 
-The RBW change is:
+### 3 MHz RBW
+
+With 3 MHz RBW, the same narrow features become much less distinct and approach the noise background.
+
+![Spectrum with 3 MHz RBW](images/rbw_3mhz.jpg)
+
+### What causes the visibility change?
+
+The RBW changes by a factor of 30:
 
 ```text
-3 MHz / 100 kHz = 30
+3 MHz ÷ 100 kHz = 30
 ```
 
-For approximately white noise, the corresponding change in integrated noise power is:
+For approximately white noise, the change in integrated noise power is:
 
 ```text
 10 × log10(30) ≈ 14.8 dB
 ```
 
-So the 3 MHz measurement includes substantially more noise power within each resolution bandwidth. The RF signals themselves have not simply become weaker; the analyzer is observing them through a much wider resolution filter.
+This means that a much wider RBW admits substantially more noise power into each resolution bandwidth.
 
-### Why spectral resolution matters
+The important point is that the RF signal itself has not simply become weaker. The analyzer is measuring it through a much wider resolution filter, so the signal is less separated from the surrounding noise.
+
+### What is spectral resolution?
 
 Spectral resolution is the ability of the analyzer to distinguish spectral components that are close together in frequency.
 
-A narrow signal can be visible at a small RBW because the measurement bandwidth is narrow enough to separate the signal from more of the surrounding noise. At a much larger RBW, nearby components can merge and the increased noise contribution can make a narrow signal harder to distinguish.
+It is not simply about making a graph look sharper. A sufficiently small RBW allows narrow signals to be separated from nearby spectral components and from more of the noise background.
 
-The practical trade-off is:
+### Practical trade-off
 
 ```text
-Smaller RBW → finer spectral resolution → better narrow-signal visibility → slower sweep
-Larger RBW  → coarser spectral resolution → faster sweep → more noise power per RBW
+Smaller RBW
+    ↓
+finer spectral resolution
+    ↓
+better narrow-signal visibility
+    ↓
+slower sweep
 ```
 
-This is why RBW is a measurement parameter, not merely a display setting.
+```text
+Larger RBW
+    ↓
+coarser spectral resolution
+    ↓
+faster sweep
+    ↓
+more noise power per RBW
+```
 
-## Why use Python instead of manual operation?
+The two measurements demonstrate this trade-off directly: 100 kHz RBW produced a 3.874 s sweep, while 3 MHz RBW produced a 90.56 ms sweep.
 
-Python automation provides consistent instrument configuration, repeatable sweeps, automatic data storage, batch measurements, and reproducible analysis.
+RBW is therefore an important measurement setting, not just a display setting.
 
-It is particularly useful when several sweeps must be acquired and averaged with identical settings.
+## 6. Why use Python instead of manual operation?
 
-## VISA and SCPI relationship
+Python automation provides:
+
+```text
+consistent instrument configuration
+repeatable sweeps
+automatic data storage
+batch measurements
+repeatable averaging
+reproducible analysis
+reduced manual configuration errors
+```
+
+The main benefit is repeatability. The same measurement state can be reproduced without repeatedly setting every analyzer parameter from the front panel.
+
+## 7. VISA and SCPI relationship
 
 ```text
 Python application
@@ -205,9 +252,11 @@ Python application
        SCPI
 ```
 
-SCPI commands configure the analyzer and request measurement data. The exact command syntax varies between analyzer manufacturers and models, so the instrument programming manual should always be checked.
+SCPI commands configure the analyzer and request measurement data. The exact syntax varies between analyzer manufacturers and models, so the instrument programming manual should always be checked.
 
-## Typical connection test
+## 8. Basic VISA connection test
+
+Start by checking which VISA resources are visible:
 
 ```python
 import pyvisa
@@ -221,44 +270,46 @@ For a known TCP/IP address:
 ```python
 import pyvisa
 
-ANALYZER_IP = "192.168.1.20"   # replace with your analyzer IP
+ANALYZER_IP = "<ANALYZER_IP>"
 RESOURCE = f"TCPIP0::{ANALYZER_IP}::INSTR"
 
 rm = pyvisa.ResourceManager("@py")
 instrument = rm.open_resource(RESOURCE)
+
 print(instrument.query("*IDN?"))
+
 instrument.close()
 rm.close()
 ```
 
-## Acquisition and analysis separation
+## 9. Acquisition and analysis separation
 
-The project separates instrument control from post-processing:
+The project separates instrument control from post-processing.
 
 ```text
 acquisition/
-    SA_code.py
+    N9342C_spectrum_capture.py
 
         ↓ CSV
 
 analysis/
-    analysis_3.py
+    basic_analysis.py
 
         ↓
 
 plots + numerical results
 ```
 
-The analyzer is needed during measurement acquisition. Once the CSV files are saved, the analysis can be repeated without reconnecting to the instrument.
+The analyzer is needed during acquisition. Once the CSV files are saved, the analysis can be repeated without reconnecting to the instrument.
 
-## Repository structure
+## 10. Repository structure
 
 ```text
 spectrum-analyzer-python-tools/
 ├── acquisition/
-│   └── SA_code.py
+│   └── N9342C_spectrum_capture.py
 ├── analysis/
-│   └── analysis_3.py
+│   └── basic_analysis.py
 ├── images/
 │   ├── rbw_100khz.jpg
 │   └── rbw_3mhz.jpg
@@ -268,12 +319,24 @@ spectrum-analyzer-python-tools/
 └── README.md
 ```
 
-## Instrument-specific adaptation
+## 11. Instrument-specific adaptation
 
-Before connecting to a real analyzer, verify the instrument model, firmware, VISA resource, TCP/IP control method, SCPI programming manual, trace format, frequency-axis query, power-axis query, and sweep-completion method.
+Before connecting to a real analyzer, verify:
+
+```text
+instrument model
+firmware/version
+VISA resource
+TCP/IP control method
+SCPI programming manual
+trace data format
+frequency-axis query
+power-axis query
+sweep-completion method
+```
 
 Do not assume that SCPI commands from one analyzer model will work unchanged on another.
 
-## Scope
+## 12. Scope
 
 This repository is a reusable example of automated RF spectrum acquisition and analysis. It is not tied to a particular test article, antenna, filter, or experimental result.
