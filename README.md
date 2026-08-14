@@ -36,9 +36,9 @@ The repository covers the complete measurement chain:
 
 For Ethernet control, connect the spectrum analyzer and PC either directly with an Ethernet cable or through the same laboratory LAN.
 
-The analyzer must have a reachable IPv4 address. The PC and analyzer must normally be on compatible IP subnets when using a direct or local-network connection.
+The analyzer must have a reachable IPv4 address. The PC and analyzer should normally be on compatible IP subnets.
 
-Example:
+Example only:
 
 ```text
 PC Ethernet:       192.168.1.10
@@ -46,86 +46,40 @@ Spectrum analyzer: 192.168.1.20
 Subnet mask:       255.255.255.0
 ```
 
-These addresses are examples only. Replace them with the actual addresses configured on the laboratory network.
+Replace these example values with the network settings used in your laboratory.
 
-Before running Python, verify basic network connectivity from the PC:
+Check connectivity first:
 
-```text
+```bash
 ping <ANALYZER_IP>
 ```
 
-Then use the analyzer IP in the VISA resource string. A common VISA TCP/IP instrument resource is:
+A common VISA TCP/IP instrument resource is:
 
 ```text
 TCPIP0::<ANALYZER_IP>::INSTR
 ```
 
-Some instruments instead use HiSLIP or a raw TCP socket. The exact VISA resource and port depend on the analyzer model and its programming interface.
+The exact resource format depends on the analyzer and VISA interface.
 
 ## Python environment
 
-Recommended baseline for this repository:
+Recommended baseline: **Python 3.10 or newer**.
 
-```text
-Python 3.10 or newer
-```
-
-Create a virtual environment:
+Create an isolated environment:
 
 ```bash
 python -m venv .venv
 ```
 
-Windows:
-
-```bash
-.venv\Scripts\activate
-```
-
-Linux/macOS:
-
-```bash
-source .venv/bin/activate
-```
-
-Install the packages:
+Activate it and install the dependencies:
 
 ```bash
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## Main packages
-
-### PyVISA
-
-PyVISA is the Python interface used to communicate with measurement instruments through VISA. It provides instrument sessions, queries, writes, and data-transfer functions.
-
-### PyVISA-py
-
-PyVISA-py is a pure-Python VISA backend. The scripts in this repository use:
-
-```python
-rm = pyvisa.ResourceManager("@py")
-```
-
-This allows instrument communication without relying on a separate vendor VISA implementation when the supported interface is available.
-
-### NumPy
-
-Used for numerical operations on frequency and power arrays.
-
-### Pandas
-
-Used for CSV storage and analysis.
-
-### Matplotlib
-
-Used to generate spectrum and comparison plots.
-
-## Package compatibility
-
-The repository uses Python 3.10+ as the recommended baseline. Record the exact environment used for a laboratory measurement with:
+Record the exact environment used for a measurement with:
 
 ```bash
 python --version
@@ -136,86 +90,104 @@ pip show pandas
 pip show matplotlib
 ```
 
-For reproducible measurements, pin the package versions actually validated on the measurement PC rather than assuming that future releases will behave identically.
+## Main packages
+
+**PyVISA** provides the Python interface to VISA instruments and handles resource sessions, queries, writes, and data transfer.
+
+**PyVISA-py** is a pure-Python VISA backend. The acquisition code selects it with:
+
+```python
+rm = pyvisa.ResourceManager("@py")
+```
+
+**NumPy** is used for numerical operations on frequency and power arrays.
+
+**Pandas** is used for CSV-based analysis.
+
+**Matplotlib** is used to generate spectrum and comparison plots.
+
+For reproducible laboratory work, pin the exact package versions that have been validated on the measurement PC.
 
 ## Why analyzer parameters matter
 
 ### Start and stop frequency
 
-These define the measured frequency region. A wider span provides broader coverage but can reduce the amount of detail available for a fixed number of sweep points.
+These define the measured frequency region. A wider span gives broader coverage, while a smaller span can make a particular spectral region easier to inspect.
 
 ### RBW — Resolution Bandwidth
 
-RBW is the frequency-domain resolution of the measurement. It is especially important when the signals of interest are narrowband.
+RBW is the analyzer's frequency resolution. It is especially important when the signals of interest are narrowband.
 
-A smaller RBW allows the analyzer to distinguish narrower spectral features and generally includes less noise power in each resolution bandwidth. The trade-off is a longer sweep time.
+A smaller RBW allows finer frequency discrimination and generally includes less noise power within each resolution bandwidth. The trade-off is a longer sweep time.
 
-A larger RBW reduces the measurement time but can make narrow spectral features less distinguishable and increases the noise power measured within each resolution bandwidth.
+A larger RBW allows faster measurements, but nearby or narrow spectral features can become less distinguishable and the noise power measured within each resolution bandwidth increases.
 
 ### VBW — Video Bandwidth
 
-VBW applies additional filtering to the detected trace. A smaller VBW can smooth rapid fluctuations in the displayed trace, but may increase measurement time.
+VBW applies additional filtering to the detected trace. A smaller VBW can smooth rapid fluctuations, but may increase measurement time.
 
 ### Sweep time
 
-Sweep time controls how long the analyzer takes to scan the selected span. It is affected by settings such as RBW and VBW.
+Sweep time is the time required to scan the selected frequency span. Settings such as RBW and VBW can strongly affect it.
 
 ### Number of averages
 
-Averaging repeated sweeps can reduce random fluctuations and produce a more stable estimate of the spectrum.
+Averaging repeated sweeps reduces random fluctuations and produces a more stable estimate of the spectrum.
 
-## Practical RBW example: signal visibility
+## RBW in practice: why signal visibility changes
 
-A simple measurement was made with the same physical setup while changing the RBW. The center frequency and span were kept at 1.5 GHz and 2 GHz respectively. VBW was kept equal to RBW.
+The following two measurements used the same physical setup, center frequency, and span. Only the RBW/VBW settings were changed.
 
 ### Measured settings
 
-| Parameter | 100 kHz RBW | 3 MHz RBW |
+| Parameter | RBW = 100 kHz | RBW = 3 MHz |
 |---|---:|---:|
-| RBW | 100 kHz | 3 MHz |
-| VBW | 100 kHz | 3 MHz |
+| Resolution bandwidth | 100 kHz | 3 MHz |
+| Video bandwidth | 100 kHz | 3 MHz |
 | Center frequency | 1.5 GHz | 1.5 GHz |
 | Span | 2 GHz | 2 GHz |
 | Sweep time | 3.874 s | 90.56 ms |
 
 ### What changes visually?
 
-With 100 kHz RBW, the narrow H1 and RF-source spectral features are much easier to distinguish from the surrounding noise.
+With **100 kHz RBW**, the narrow H1 and RF-source features are much easier to distinguish from the surrounding noise.
 
-With 3 MHz RBW, the same features become much less distinct and can approach the noise background.
+With **3 MHz RBW**, the same features become much less distinct and can approach the noise background.
 
-The RBW ratio is:
-
-\[
-\frac{3\,\mathrm{MHz}}{100\,\mathrm{kHz}}=30
-\]
-
-For approximately white noise, the corresponding increase in integrated noise power is:
-
-\[
-10\log_{10}(30)\approx14.8\,\mathrm{dB}
-\]
-
-This helps explain why the wider 3 MHz measurement has a higher noise contribution within each resolution bandwidth. The actual RF signals have not simply become weaker; the analyzer is measuring them through a much wider resolution filter.
-
-### Spectral resolution in practice
-
-Spectral resolution is the ability of the analyzer to distinguish spectral components that are close together in frequency. It is not simply a matter of making a graph look sharper.
-
-When the signal is narrow compared with the RBW, a large RBW can merge nearby spectral components and increase the noise contribution. A smaller RBW provides finer frequency discrimination and can make narrow signals visible above the noise floor.
-
-The practical trade-off is therefore:
+The RBW change is:
 
 ```text
-Smaller RBW  → better spectral resolution → better narrow-signal visibility → slower sweep
-Larger RBW   → lower spectral resolution → faster sweep → more noise per RBW
+3 MHz / 100 kHz = 30
 ```
+
+For approximately white noise, the corresponding change in integrated noise power is:
+
+```text
+10 × log10(30) ≈ 14.8 dB
+```
+
+So the 3 MHz measurement includes substantially more noise power within each resolution bandwidth. The RF signals themselves have not simply become weaker; the analyzer is observing them through a much wider resolution filter.
+
+### Why spectral resolution matters
+
+Spectral resolution is the ability of the analyzer to distinguish spectral components that are close together in frequency.
+
+A narrow signal can be visible at a small RBW because the measurement bandwidth is narrow enough to separate the signal from more of the surrounding noise. At a much larger RBW, nearby components can merge and the increased noise contribution can make a narrow signal harder to distinguish.
+
+The practical trade-off is:
+
+```text
+Smaller RBW → finer spectral resolution → better narrow-signal visibility → slower sweep
+Larger RBW  → coarser spectral resolution → faster sweep → more noise power per RBW
+```
+
+This is why RBW is a measurement parameter, not merely a display setting.
 
 ## Why use Python instead of manual operation?
 
-Python automation provides consistent instrument configuration, repeatable sweeps, automatic data storage, batch measurements, and reproducible analysis. It also makes repeated averaging practical without manually repeating the same analyzer operations.
+Python automation provides consistent instrument configuration, repeatable sweeps, automatic data storage, batch measurements, and reproducible analysis.
 
-The important advantage is repeatability: the same measurement state can be reproduced later instead of relying on a sequence of manual front-panel settings.
+It is particularly useful when several sweeps must be acquired and averaged with identical settings.
 
 ## VISA and SCPI relationship
 
@@ -233,7 +205,7 @@ Python application
        SCPI
 ```
 
-SCPI commands configure the analyzer and request measurement data. The exact command syntax varies between analyzer manufacturers and models, so the programming manual for the specific instrument should always be checked.
+SCPI commands configure the analyzer and request measurement data. The exact command syntax varies between analyzer manufacturers and models, so the instrument programming manual should always be checked.
 
 ## Typical connection test
 
@@ -277,7 +249,7 @@ analysis/
 plots + numerical results
 ```
 
-The analyzer is therefore needed when collecting measurements, while the saved CSV data can be analysed repeatedly without reconnecting to the instrument.
+The analyzer is needed during measurement acquisition. Once the CSV files are saved, the analysis can be repeated without reconnecting to the instrument.
 
 ## Repository structure
 
