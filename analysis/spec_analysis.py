@@ -19,7 +19,7 @@ STOP_GHZ = 2.0
 # ============================================================
 
 # All plots and the final summary will be saved here
-OUTPUT_FOLDER = "FSS_analysis_plots"
+OUTPUT_FOLDER = "Fss_analysis_plots"
 
 os.makedirs(
     OUTPUT_FOLDER,
@@ -44,66 +44,19 @@ print(os.path.abspath(OUTPUT_FOLDER))
 TESTS = [
 
     {
-        "rfi_mhz": 1050,
-        "no_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rf1_1050mhz/raw_NO_FSS_AVERAGED_20260813_111047.csv",
-        "with_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rf1_1050mhz/raw_WITH_FSS_AVERAGED_20260813_111416.csv"
+        "rfi_mhz": 1100,
+        "no_fss": "/path/to/your/csv/file",
+        "with_fss": "/path/to/your/csv/file"
     },
 
     {
         "rfi_mhz": 1200,
-        "no_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1200mhz/raw_NO_FSS_AVERAGED_20260813_112214.csv",
-        "with_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1200mhz/raw_WITH_FSS_AVERAGED_20260813_112410.csv"
+        "no_fss": "/path/to/your/csv/file",
+        "with_fss": "/path/to/your/csv/file"
     },
 
-    {
-        "rfi_mhz": 1300,
-        "no_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1300mhz/raw_NO_FSS_AVERAGED_20260813_113137.csv",
-        "with_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1300mhz/raw_WITH_FSS_AVERAGED_20260813_113458.csv"
-    },
-
-    {
-        "rfi_mhz": 1400,
-        "no_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1400mhz/raw_NO_FSS_AVERAGED_20260813_122023.csv",
-        "with_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1400mhz/raw_WITH_FSS_AVERAGED_20260813_122231.csv"
-    },
-
-    {
-        "rfi_mhz": 1500,
-        "no_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1500mhz/raw_NO_FSS_AVERAGED_20260813_113919.csv",
-        "with_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1500mhz/raw_WITH_FSS_AVERAGED_20260813_114022.csv"
-    },
-
-    {
-        "rfi_mhz": 1600,
-        "no_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1600mhz/raw_NO_FSS_AVERAGED_20260813_114602.csv",
-        "with_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1600mhz/raw_WITH_FSS_AVERAGED_20260813_114714.csv"
-    },
-
-    {
-        "rfi_mhz": 1700,
-        "no_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1700mhz/raw_NO_FSS_AVERAGED_20260813_114912.csv",
-        "with_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1700mhz/raw_WITH_FSS_AVERAGED_20260813_115045.csv"
-    },
-
-    {
-        "rfi_mhz": 1800,
-        "no_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1800mhz/raw_NO_FSS_AVERAGED_20260813_115311.csv",
-        "with_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1800mhz/raw_WITH_FSS_AVERAGED_20260813_115519.csv"
-    },
-
-    {
-        "rfi_mhz": 1900,
-        "no_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1900mhz/raw_NO_FSS_AVERAGED_20260813_115812.csv",
-        "with_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1900mhz/raw_WITH_FSS_AVERAGED_20260813_115934.csv"
-    },
-
-    {
-        "rfi_mhz": 1950,
-        "no_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1950mhz/raw_NO_FSS_AVERAGED_20260813_120244.csv",
-        "with_fss": "/home/casper-ubuntu20/Music/A6_SA_13082026/X_side_rfi_1950mhz/raw_WITH_FSS_AVERAGED_20260813_120423.csv"
-    }
+    # Add additional RFI frequencies and CSV file paths as required
 ]
-
 
 # ============================================================
 # READ CSV
