@@ -313,8 +313,6 @@ spectrum-analyzer-python-tools/
 ├── images/
 │   ├── rbw_100khz.jpg
 │   └── rbw_3mhz.jpg
-├── data/
-├── plots/
 ├── requirements.txt
 └── README.md
 ```
